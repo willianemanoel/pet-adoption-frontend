@@ -4,20 +4,22 @@
 export interface Pet {
   id: number;
   name: string;
-  type: 'Cachorro' | 'Gato' | 'Coelho' | 'Outro';
-  age: number;
-  description: string;
-  photos: string[];
-  ageUnit: string;
-  image?: string;          // Imagem opcional
-  organization?: string;   // ONG responsável (opcional)
-  breed?: string;          // Raça
-  location?: string;       // Localização
-  vaccinated?: boolean;    // Vacinado
-  neutered?: boolean;      // Castrado
-  size?: 'Pequeno' | 'Médio' | 'Grande'; // Porte
-  temperament?: string[];  // Temperamento
-  needs?: string[];        // Necessidades
+  type?: 'Cachorro' | 'Gato' | 'Coelho' | 'Outro';
+  age?: number;
+  description?: string;
+  photos?: string[];
+  ageUnit?: string;
+  image?: string;
+  organization?: string;
+  breed?: string;
+  location?: string;
+  vaccinated?: boolean;
+  neutered?: boolean;
+  size?: 'Pequeno' | 'Médio' | 'Grande';
+  temperament?: string[];
+  needs?: string[];
+
+  
 }
 
 // ➤ Tipo para matches de adoção

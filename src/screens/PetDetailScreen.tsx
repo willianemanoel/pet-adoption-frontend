@@ -1,22 +1,17 @@
 import React from 'react';
-import { 
-  View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, 
-  Dimensions, SafeAreaView, StatusBar 
+import {
+  View, Text, Image, StyleSheet, ScrollView, TouchableOpacity,
+  Dimensions, SafeAreaView, StatusBar
 } from 'react-native';
 import { Feather, FontAwesome5 } from '@expo/vector-icons';
-import { RouteProp } from '@react-navigation/native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList } from '../navigation/HomeStackNavigator';
 
 const { width, height } = Dimensions.get('window');
 
-type PetDetailScreenRouteProp = RouteProp<HomeStackParamList, 'PetDetail'>;
+type Props = NativeStackScreenProps<HomeStackParamList, 'PetDetail'>;
 
-interface Props {
-  route: PetDetailScreenRouteProp;
-  navigation: any;
-}
-
-export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
+const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { pet } = route.params;
 
   if (!pet) {
@@ -38,16 +33,14 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   return (
     <View style={styles.fullContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FEF3C7" />
-      
-      {/* Imagem principal */}
-      <Image 
-        source={{ uri: pet.photos?.[0] || 'https://via.placeholder.com/300' }} 
-        style={styles.image} 
-        resizeMode="cover" 
+
+      <Image
+        source={{ uri: pet.photos?.[0] || 'https://via.placeholder.com/300' }}
+        style={styles.image}
+        resizeMode="cover"
       />
 
-      {/* Botão voltar */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
@@ -55,17 +48,14 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       </TouchableOpacity>
 
       <View style={styles.contentContainer}>
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Nome do pet */}
           <Text style={styles.name}>{pet.name}</Text>
 
-          {/* Grid de atributos */}
           <View style={styles.attributesGrid}>
-            {/** Idade */}
             <View style={styles.attributeItem}>
               <View style={styles.attributeIcon}>
                 <Feather name="calendar" size={16} color="#3B82F6" />
@@ -78,7 +68,6 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
               </View>
             </View>
 
-            {/** Porte */}
             <View style={styles.attributeItem}>
               <View style={styles.attributeIcon}>
                 <FontAwesome5 name="ruler" size={16} color="#3B82F6" />
@@ -89,7 +78,6 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
               </View>
             </View>
 
-            {/** Tipo */}
             <View style={styles.attributeItem}>
               <View style={styles.attributeIcon}>
                 <FontAwesome5 name={getSexIcon()} size={16} color={getSexColor()} />
@@ -100,7 +88,6 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
               </View>
             </View>
 
-            {/** Localização */}
             <View style={styles.attributeItem}>
               <View style={styles.attributeIcon}>
                 <Feather name="map-pin" size={16} color="#3B82F6" />
@@ -112,7 +99,6 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           </View>
 
-          {/* Raça (se disponível) */}
           {pet.breed && (
             <View style={styles.attributeRow}>
               <View style={styles.attributeIcon}>
@@ -125,7 +111,6 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           )}
 
-          {/* Sobre mim */}
           <View style={styles.aboutSection}>
             <Text style={styles.aboutTitle}>Sobre mim</Text>
             <Text style={styles.aboutText}>
@@ -133,7 +118,6 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
             </Text>
           </View>
 
-          {/* Informações de saúde */}
           <View style={styles.infoSection}>
             <Text style={styles.infoTitle}>Informações de saúde</Text>
             <View>
@@ -155,9 +139,8 @@ export const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           <View style={styles.spacer} />
         </ScrollView>
 
-        {/* Botão fixo */}
         <View style={styles.ctaContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.ctaButton}
             onPress={() => navigation.navigate('Chat', { petId: pet.id, petName: pet.name })}
           >

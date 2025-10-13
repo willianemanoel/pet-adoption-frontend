@@ -1,12 +1,16 @@
-const createExpoWebpackConfigAsync = require('@expo/webpack-config');
-
-module.exports = async function (env, argv) {
-  const config = await createExpoWebpackConfigAsync({
-    ...env,
-    babel: {
-      dangerouslyAddModulePathsToTranspile: ['@expo/vector-icons']
-    }
-  }, argv);
-  
-  return config;
-};
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "NodeNext",
+    "jsx": "react-native",
+    "moduleResolution": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  "include": ["src"]
+}

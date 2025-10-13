@@ -21,7 +21,7 @@ const PetCard: React.FC<PetCardProps> = ({
   isFavorite,
   animation
 }) => {
-  const getPetEmoji = (type: string): string => {
+  const getPetEmoji = (type: string | undefined): string => {
     switch (type) {
       case 'Cachorro': return '🐕';
       case 'Gato': return '🐈';
@@ -30,7 +30,7 @@ const PetCard: React.FC<PetCardProps> = ({
     }
   };
 
-  const getSizeColor = (size: string): string => {
+  const getSizeColor = (size: string | undefined): string => {
     switch (size) {
       case 'Pequeno': return '#4CAF50';
       case 'Médio': return '#FF9800';
@@ -82,9 +82,9 @@ const PetCard: React.FC<PetCardProps> = ({
       </TouchableOpacity>
       
       {/* Informações do Pet */}
-      <Text style={styles.petName}>{pet.name}</Text>
+      <Text style={styles.petName}>{pet.name ?? ''}</Text>
       <Text style={styles.petDetails}>
-        {pet.breed} • {pet.age} {pet.age === 1 ? 'ano' : 'anos'} • {pet.location}
+        {(pet.breed ?? '')} • {pet.age ?? ''} {pet.age === 1 ? 'ano' : 'anos'} • {(pet.location ?? '')}
       </Text>
       
       {/* Tags de Informação */}
@@ -100,7 +100,7 @@ const PetCard: React.FC<PetCardProps> = ({
       
       {/* Descrição */}
       <Text style={styles.petDescription} numberOfLines={3}>
-        {pet.description}
+        {pet.description ?? 'Sem descrição disponível.'}
       </Text>
       
       {/* Botões de Ação */}

@@ -1,154 +1,107 @@
+//src\screens\UserProfileScreen.tsx
+
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, Image } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+
+const MenuItem = ({ icon, text }: { icon: any; text: string }) => (
+  <TouchableOpacity style={styles.menuItem}>
+    <View style={styles.iconContainer}>
+      <Feather name={icon} size={20} color="#3B82F6" />
+    </View>
+    <Text style={styles.menuText}>{text}</Text>
+    <Feather name="chevron-right" size={20} color="#9CA3AF" />
+  </TouchableOpacity>
+);
 
 export const UserProfileScreen: React.FC = () => {
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Feather name="user" size={40} color="#6B7280" />
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Image 
+            source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop' }} 
+            style={styles.avatar}
+          />
+          <Text style={styles.userName}>Maria Silva</Text>
+          <Text style={styles.userEmail}>maria.silva@email.com</Text>
         </View>
-        <Text style={styles.userName}>Maria Silva</Text>
-        <Text style={styles.userEmail}>maria.silva@email.com</Text>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Minhas Informações</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Minha Conta</Text>
+          <MenuItem icon="user" text="Dados Pessoais" />
+          <MenuItem icon="home" text="Informações da Casa" />
+          <MenuItem icon="settings" text="Preferências de Adoção" />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Adoções</Text>
+          <MenuItem icon="list" text="Processos em Andamento" />
+          <MenuItem icon="check-circle" text="Adoções Concluídas" />
+        </View>
         
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="user" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Dados Pessoais</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
-        </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>App</Text>
+          <MenuItem icon="bell" text="Notificações" />
+          <MenuItem icon="help-circle" text="Ajuda e Suporte" />
+        </View>
 
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="home" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Informações da Casa</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
+        <TouchableOpacity style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Sair da Conta</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="heart" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Preferências de Adoção</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Minhas Adoções</Text>
-        
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="list" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Processos em Andamento</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="check-circle" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Adoções Concluídas</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Configurações</Text>
-        
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="bell" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Notificações</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="lock" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Privacidade e Segurança</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Feather name="help-circle" size={20} color="#3B82F6" />
-          <Text style={styles.menuText}>Ajuda e Suporte</Text>
-          <Feather name="chevron-right" size={20} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.logoutButton}>
-        <Text style={styles.logoutText}>Sair da Conta</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FEF3C7',
-  },
+  safeArea: { flex: 1, backgroundColor: '#F7F8FA' },
+  container: { flex: 1 },
   header: {
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 80,
-    paddingBottom: 32,
+    paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderColor: '#E5E7EB',
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     marginBottom: 16,
   },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
-  section: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
+  userName: { fontSize: 24, fontWeight: 'bold', color: '#1F2937', marginBottom: 4 },
+  userEmail: { fontSize: 16, color: '#6B7280' },
+  section: { marginTop: 16 },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#1F2937',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    color: '#6B7280',
+    paddingHorizontal: 24,
+    marginBottom: 8,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
+    paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderColor: '#F3F4F6',
   },
-  menuText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1F2937',
-    marginLeft: 12,
-  },
-  logoutButton: {
-    margin: 16,
-    padding: 16,
-    backgroundColor: '#EF4444',
-    borderRadius: 12,
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  logoutText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  menuText: { flex: 1, fontSize: 16, color: '#1F2937', marginLeft: 16 },
+  logoutButton: { margin: 24, padding: 16, backgroundColor: '#FEF2F2', borderRadius: 16, alignItems: 'center' },
+  logoutText: { color: '#EF4444', fontSize: 16, fontWeight: '600' },
 });
 
 export default UserProfileScreen;

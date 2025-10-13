@@ -8,6 +8,7 @@ import { Pet } from '../types/types'; // se tiver tipo Pet
 export type HomeStackParamList = {
   Home: undefined;
   PetDetail: { pet: Pet };
+   Chat: { petId: number; petName: string };
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();

@@ -1,36 +1,34 @@
 // src/types/navigation.ts
-import { NavigatorScreenParams } from '@react-navigation/native';
+import { Pet } from './types';
 
-// Pets Stack (Dashboard/Admin)
-export type PetsStackParamList = {
-  DashboardPets: undefined;
-  AddEditPet: { pet?: any };
+// Declaração manual de NavigatorScreenParams
+export type NavigatorScreenParams<ParamList> = {
+  screen?: keyof ParamList;
+  params?: ParamList[keyof ParamList];
 };
 
-// Chats Stack (Dashboard/Admin)
-export type ChatStackParamList = {
-  DashboardChats: undefined;
-  Chat: { chatId: string };
-};
-
-// Tabs do App (ATUALIZADO - adicione todas as abas que você tem)
+// Tabs do App
 export type AppTabParamList = {
   Home: undefined;
   Favorites: undefined;
   Matches: undefined;
-  Chats: undefined;
   Profile: undefined;
-  Pets: undefined;
 };
 
-// Root Stack (geral)
+// Tabs do Admin
+export type AdminTabParamList = {
+  DashboardPets: undefined;
+  DashboardMatchRequests: undefined;
+  DashboardChats: undefined;
+};
+
+// Root Stack
 export type RootStackParamList = {
   Welcome: undefined;
-  Main: undefined;
-  PetDetail: { pet: any };
+  Main: NavigatorScreenParams<AppTabParamList>;
+  PetDetail: { pet: Pet };
   Chat: { chatId: string };
   AdminLogin: undefined;
-  DashboardPets: undefined;
-  AddEditPet: { pet?: any };
-  DashboardChats: undefined;
+  AdminDashboard: NavigatorScreenParams<AdminTabParamList>;
+   UserProfileRoot: undefined;
 };
