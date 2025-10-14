@@ -1,40 +1,100 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert, SafeAreaView } from 'react-native';
+// src/screens/DashboardMatchRequestsScreen.tsx
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/native';
+import { API_BASE_URL } from '../config/api';
 
-const mockRequests = [
-  { id: 'req1', userName: 'Ana Carolina', userImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', petName: 'Bolinha', petImage: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=100&h=100&fit=crop', timestamp: '2 horas atrás' },
-  { id: 'req2', userName: 'Marcos Paulo', userImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', petName: 'Frajola', petImage: 'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=100&h=100&fit=crop', timestamp: '5 horas atrás' },
-];
+interface MatchRequest {
+  id: string;
+  userName: string;
+  userImage: string;
+  petName: string;
+  petImage: string;
+  timestamp: string;
+}
 
 const DashboardMatchRequestsScreen: React.FC = () => {
-  const [requests, setRequests] = useState(mockRequests);
+  const [requests, setRequests] = useState<MatchRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const isFocused = useIsFocused();
 
-  const handleAccept = (requestId: string) => {
-    setRequests(prev => prev.filter(req => req.id !== requestId));
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/match-requests`);
+      const data = await response.json();
+
+      if (data.success && data.requests) {
+        setRequests(data.requests);
+      } else {
+        throw new Error(data.message || "Não foi possível carregar as solicitações.");
+      }
+    } catch (error: any) {
+      console.error("Erro ao buscar solicitações:", error);
+      Alert.alert("Erro", error.message || "Não foi possível carregar as solicitações.");
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  const handleDecline = (requestId: string) => {
-     setRequests(prev => prev.filter(req => req.id !== requestId));
+
+  useEffect(() => {
+    if (isFocused) {
+      fetchRequests();
+    }
+  }, [isFocused]);
+
+  const handleAction = async (requestId: string, action: 'accept' | 'decline') => {
+    const actionText = action === 'accept' ? 'aprovar' : 'recusar';
+    
+    Alert.alert(
+      `Confirmar Ação`,
+      `Você tem certeza de que deseja ${actionText} esta solicitação?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          style: action === 'decline' ? 'destructive' : 'default',
+          onPress: async () => {
+            try {
+              setRequests(prev => prev.filter(req => req.id !== requestId));
+              Alert.alert('Sucesso', `Solicitação ${action === 'accept' ? 'aprovada' : 'recusada'} com sucesso!`);
+            } catch (error) {
+              Alert.alert('Erro', `Não foi possível ${actionText} a solicitação.`);
+            }
+          }
+        },
+      ]
+    );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <div>
-            <h1>Solicitações</h1>
-            <p>Aprove ou recuse os pedidos</p>
-          </div>
-          <TouchableOpacity style={styles.headerButton}>
+          <View>
+            <Text style={styles.title}>Solicitações</Text>
+            <Text style={styles.subtitle}>Aprove ou recuse os pedidos</Text>
+          </View>
+          <TouchableOpacity style={styles.headerButton} onPress={fetchRequests}>
             <Feather name="refresh-cw" size={20} color="#6B7280" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.statsContainer}>
-            <View style={styles.statCard}><Text style={styles.statNumber}>{requests.length}</Text><Text style={styles.statLabel}>Pendentes</Text></View>
-            <View style={styles.statCard}><Text style={styles.statNumber}>12</Text><Text style={styles.statLabel}>Aprovados</Text></View>
-            <View style={styles.statCard}><Text style={styles.statNumber}>4</Text><Text style={styles.statLabel}>Recusados</Text></View>
+          <View style={styles.statCard}><Text style={styles.statNumber}>{requests.length}</Text><Text style={styles.statLabel}>Pendentes</Text></View>
+          <View style={styles.statCard}><Text style={styles.statNumber}>12</Text><Text style={styles.statLabel}>Aprovados</Text></View>
+          <View style={styles.statCard}><Text style={styles.statNumber}>4</Text><Text style={styles.statLabel}>Recusados</Text></View>
         </View>
 
         <FlatList
@@ -54,22 +114,23 @@ const DashboardMatchRequestsScreen: React.FC = () => {
                 </View>
               </View>
               <View style={styles.actions}>
-                <TouchableOpacity style={[styles.button, styles.declineButton]} onPress={() => handleDecline(item.id)}>
-                  <Feather name="x" size={20} color="#FFFFFF" />
-                  <Text style={styles.buttonText}>Recusar</Text>
+                <TouchableOpacity style={[styles.button, styles.declineButton]} onPress={() => handleAction(item.id, 'decline')}>
+                  <Feather name="x" size={20} color="#DC2626" />
+                  <Text style={[styles.buttonText, styles.declineButtonText]}>Recusar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAccept(item.id)}>
-                  <Feather name="check" size={20} color="#FFFFFF" />
-                  <Text style={styles.buttonText}>Aprovar</Text>
+                <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAction(item.id, 'accept')}>
+                  <Feather name="check" size={20} color="#059669" />
+                  <Text style={[styles.buttonText, styles.acceptButtonText]}>Aprovar</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Feather name="git-pull-request" size={48} color="#9CA3AF" />
-              <Text style={styles.emptyText}>Nenhuma solicitação pendente.</Text>
+            <View style={styles.centered}>
+              <Feather name="inbox" size={48} color="#CBD5E1" />
+              <Text style={styles.emptyText}>Nenhuma solicitação pendente</Text>
+              <Text style={styles.emptySubtitle}>Quando houver um novo pedido de adoção, ele aparecerá aqui.</Text>
             </View>
           }
         />
@@ -79,19 +140,45 @@ const DashboardMatchRequestsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F7F8FA' },
+  safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
   container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 20, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderColor: '#E5E7EB' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 24, 
+    paddingTop: 20, 
+    paddingBottom: 20, 
+    backgroundColor: '#FFFFFF', 
+    borderBottomWidth: 1, 
+    borderColor: '#E5E7EB' 
+  },
   title: { fontSize: 28, fontWeight: '800', color: '#1F2937' },
   subtitle: { fontSize: 16, color: '#6B7280', marginTop: 4 },
-  headerButton: { padding: 8 },
+  headerButton: { padding: 8, backgroundColor: '#F3F4F6', borderRadius: 20 },
   statsContainer: { flexDirection: 'row', padding: 24, gap: 12 },
-  statCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+  statCard: { 
+    flex: 1, 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 16, 
+    padding: 16, 
+    alignItems: 'center', 
+    borderWidth: 1,
+    borderColor: '#E5E7EB'
+  },
   statNumber: { fontSize: 24, fontWeight: '700', color: '#1F2937' },
   statLabel: { fontSize: 12, color: '#6B7280', marginTop: 4, fontWeight: '500' },
   listContent: { paddingHorizontal: 24, paddingBottom: 24 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  card: { 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 16, 
+    marginBottom: 16, 
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden'
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   userImage: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
   userInfo: { flex: 1 },
   userName: { fontSize: 16, fontWeight: '600', color: '#1F2937' },
@@ -99,13 +186,27 @@ const styles = StyleSheet.create({
   petInfo: { alignItems: 'center' },
   petImage: { width: 50, height: 50, borderRadius: 8, marginBottom: 4 },
   petName: { fontSize: 12, color: '#1F2937', fontWeight: '500' },
-  actions: { flexDirection: 'row', gap: 12, borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 16 },
-  button: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 12, gap: 8 },
-  declineButton: { backgroundColor: '#EF4444' },
-  acceptButton: { backgroundColor: '#10B981' },
-  buttonText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
-  emptyState: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#6B7280', marginTop: 16 },
+  actions: { 
+    flexDirection: 'row', 
+    backgroundColor: '#F9FAFB',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6'
+  },
+  button: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 14, 
+    gap: 8 
+  },
+  declineButton: {},
+  acceptButton: {},
+  buttonText: { fontWeight: '600', fontSize: 14 },
+  declineButtonText: { color: '#DC2626' },
+  acceptButtonText: { color: '#059669' },
+  emptyText: { fontSize: 22, fontWeight: 'bold', color: '#374151', marginTop: 16, textAlign: 'center' },
+  emptySubtitle: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginTop: 8 },
 });
 
 export default DashboardMatchRequestsScreen;

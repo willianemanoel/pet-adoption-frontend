@@ -1,6 +1,5 @@
-// src/components/FilterBar.tsx
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { AnimalFilter } from '../types/types';
 
 interface FilterBarProps {
@@ -8,131 +7,82 @@ interface FilterBarProps {
   onFilterChange: (filter: AnimalFilter) => void;
 }
 
-const filters: AnimalFilter[] = ['all', 'Cachorro', 'Gato', 'Coelho'];
+// Array de filtros com emojis para um toque visual
+const filters: { label: string; value: AnimalFilter; emoji: string }[] = [
+  { label: 'Todos', value: 'all', emoji: '🐾' },
+  { label: 'Cachorros', value: 'Cachorro', emoji: '🐕' },
+  { label: 'Gatos', value: 'Gato', emoji: '🐈' },
+  { label: 'Coelhos', value: 'Coelho', emoji: '🐇' },
+];
 
 export const FilterBar: React.FC<FilterBarProps> = ({ selectedFilter, onFilterChange }) => {
-  const [modalVisible, setModalVisible] = useState(false);
-
   return (
     <View style={styles.container}>
-      {/* Botão fixo no canto superior direito */}
-      <TouchableOpacity
-        style={styles.filterButton}
-        onPress={() => setModalVisible(true)}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContainer}
       >
-        <Text style={styles.filterButtonText}>
-          Filtrar
-        </Text>
-      </TouchableOpacity>
-
-      {/* Modal com opções de filtro */}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecione um filtro</Text>
-
-            {filters.map((filter) => (
-              <TouchableOpacity
-                key={filter}
-                style={[
-                  styles.optionButton,
-                  selectedFilter === filter && styles.selectedOption
-                ]}
-                onPress={() => {
-                  onFilterChange(filter);
-                  setModalVisible(false); // fecha modal ao escolher
-                }}
-              >
-                <Text style={styles.optionText}>
-                  {filter === 'all' ? 'Todos' : filter}
-                </Text>
-              </TouchableOpacity>
-            ))}
-
+        {filters.map(({ label, value, emoji }) => {
+          const isSelected = selectedFilter === value;
+          return (
             <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
+              key={value}
+              style={[styles.chip, isSelected && styles.chipSelected]}
+              onPress={() => onFilterChange(value)}
             >
-              <Text style={styles.closeButtonText}>Fechar</Text>
+              <Text style={styles.emoji}>{emoji}</Text>
+              <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                {label}
+              </Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 40, // ajuste conforme o header da sua tela
-    right: 20,
-    zIndex: 1000,
+    // A barra de filtros agora flui com o conteúdo, em vez de ser posicionada de forma absoluta.
+    // O espaçamento é controlado pela tela que a utiliza (HomeScreen).
   },
-  filterButton: {
-    paddingHorizontal: 15,
+  scrollContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    gap: 12, // Espaçamento moderno entre os itens
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 10,
-    backgroundColor: '#3B82F6',
-    borderRadius: 25,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 5,
+    elevation: 2,
   },
-  filterButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  chipSelected: {
+    backgroundColor: '#FF6B6B',
+    borderColor: '#FF6B6B',
+  },
+  emoji: {
     fontSize: 16,
+    marginRight: 8,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
+  chipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
   },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  optionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 15,
-    backgroundColor: '#ddd',
-    marginVertical: 5,
-  },
-  selectedOption: {
-    backgroundColor: '#4CAF50',
-  },
-  optionText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-  },
-  closeButton: {
-    marginTop: 15,
-    paddingVertical: 12,
-    backgroundColor: '#EF4444',
-    borderRadius: 15,
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    fontSize: 16,
+  chipTextSelected: {
+    color: '#FFFFFF',
   },
 });

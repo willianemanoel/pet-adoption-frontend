@@ -1,6 +1,7 @@
 // src/hooks/usePets.ts
 import { useState, useEffect } from 'react';
 import { Pet } from '../types/types';
+import { API_BASE_URL } from '../config/api'; // ✅ Importar a URL correta
 
 export const usePets = () => {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -10,7 +11,8 @@ export const usePets = () => {
   useEffect(() => {
     const fetchPets = async () => {
       try {
-        const response = await fetch('http://192.168.0.107:3000/api/animals'); // IP do backend
+        // ✅ Usar a URL correta
+        const response = await fetch(`${API_BASE_URL}/animals`);
         const data = await response.json();
         setPets(data.animals);
       } catch (err) {

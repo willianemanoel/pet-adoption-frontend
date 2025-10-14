@@ -18,8 +18,10 @@ export interface Pet {
   size?: 'Pequeno' | 'Médio' | 'Grande';
   temperament?: string[];
   needs?: string[];
-
-  
+  // Propriedades adicionadas para o dashboard
+  status?: 'Disponível' | 'Em processo' | 'Adotado';
+  matches?: number;
+  views?: number;
 }
 
 // ➤ Tipo para matches de adoção

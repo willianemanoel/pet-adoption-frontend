@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { API_BASE_URL } from '../config/api';
 
 interface Chat {
   id: string;
@@ -27,7 +28,7 @@ const DashboardChatsScreen: React.FC = () => {
   const fetchChats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://192.168.0.103:3000/api/chats/admin');
+      const response = await fetch(`${API_BASE_URL}/chats/admin`);
       const data = await response.json();
       if (data.success && data.chats) setChats(data.chats);
       else Alert.alert('Erro', 'Não foi possível carregar as conversas');
@@ -40,11 +41,19 @@ const DashboardChatsScreen: React.FC = () => {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'active': return styles.statusGreen;
-      case 'pending': return styles.statusOrange;
-      default: return styles.statusGray;
+      case 'active': return styles.statusActive;
+      case 'pending': return styles.statusPending;
+      default: return styles.statusCompleted;
     }
   };
+  
+  const getStatusTextStyle = (status: string) => {
+    switch (status) {
+        case 'active': return styles.statusTextActive;
+        case 'pending': return styles.statusTextPending;
+        default: return styles.statusTextCompleted;
+    }
+  }
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -66,10 +75,10 @@ const DashboardChatsScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <div>
-            <h1>Conversas</h1>
-            <p>Gerenciar adoções em andamento</p>
-          </div>
+          <View>
+            <Text style={styles.title}>Conversas</Text>
+            <Text style={styles.subtitle}>Gerenciar adoções em andamento</Text>
+          </View>
           <TouchableOpacity style={styles.headerButton} onPress={fetchChats}>
             <Feather name="refresh-cw" size={20} color="#6B7280" />
           </TouchableOpacity>
@@ -90,7 +99,7 @@ const DashboardChatsScreen: React.FC = () => {
                 <View style={styles.chatHeader}>
                   <Text style={styles.petName}>{item.petName}</Text>
                   <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-                    <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+                    <Text style={[styles.statusText, getStatusTextStyle(item.status)]}>{getStatusText(item.status)}</Text>
                   </View>
                 </View>
                 <Text style={styles.userName}>Com: {item.userName}</Text>
@@ -132,9 +141,12 @@ const styles = StyleSheet.create({
   petName: { fontSize: 18, fontWeight: '600', color: '#1F2937', marginRight: 8 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statusText: { fontSize: 10, fontWeight: '600' },
-  statusGreen: { backgroundColor: '#F0FDF4', color: '#10B981' },
-  statusOrange: { backgroundColor: '#FFFBEB', color: '#F59E0B' },
-  statusGray: { backgroundColor: '#F3F4F6', color: '#6B7280' },
+  statusActive: { backgroundColor: '#F0FDF4' },
+  statusPending: { backgroundColor: '#FFFBEB' },
+  statusCompleted: { backgroundColor: '#F3F4F6' },
+  statusTextActive: { color: '#10B981' },
+  statusTextPending: { color: '#F59E0B' },
+  statusTextCompleted: { color: '#6B7280' },
   userName: { fontSize: 14, color: '#6B7280', marginBottom: 4 },
   lastMessage: { fontSize: 14, color: '#6B7280', marginBottom: 4 },
   unreadMessage: { color: '#1F2937', fontWeight: '600' },

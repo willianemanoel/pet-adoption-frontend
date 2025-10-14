@@ -1,18 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Image,
-  Alert,
-  ActivityIndicator,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Share
-} from 'react-native';
-import { Feather, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { View, Text, StyleSheet, FlatList, Image, Alert, ActivityIndicator, TouchableOpacity, SafeAreaView, StatusBar, Share } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
@@ -21,19 +9,17 @@ import { Storage } from '../utils/storage';
 
 type FavoritesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+// Esta função é exportada para ser usada na HomeScreen.
 export const saveLikedPet = async (pet: Pet): Promise<void> => {
   try {
     const favoritesJSON = await Storage.getItem('favoritePets');
     const currentFavorites: Pet[] = favoritesJSON ? JSON.parse(favoritesJSON) : [];
-    const alreadyExists = currentFavorites.some(fav => fav.id === pet.id);
-    
-    if (!alreadyExists) {
+    if (!currentFavorites.some(fav => fav.id === pet.id)) {
       const updatedFavorites = [...currentFavorites, pet];
       await Storage.setItem('favoritePets', JSON.stringify(updatedFavorites));
     }
   } catch (error) {
     console.error('Erro ao salvar pet nos favoritos:', error);
-    throw error;
   }
 };
 
@@ -43,94 +29,87 @@ export const FavoritesScreen: React.FC = () => {
   const [favorites, setFavorites] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchFavorites = async () => {
+    try {
+      setLoading(true);
+      const favoritesJSON = await Storage.getItem('favoritePets');
+      setFavorites(favoritesJSON ? JSON.parse(favoritesJSON) : []);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível carregar os favoritos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isFocused) {
       fetchFavorites();
     }
   }, [isFocused]);
 
-  const fetchFavorites = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const favoritesJSON = await Storage.getItem('favoritePets');
-      const favoritesData: Pet[] = favoritesJSON ? JSON.parse(favoritesJSON) : [];
-      setFavorites(favoritesData);
-    } catch (error) {
-      console.error('Erro ao carregar favoritos:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os favoritos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemoveFavorite = async (petId: number): Promise<void> => {
-    try {
-      const updatedFavorites = favorites.filter(fav => fav.id !== petId);
-      await Storage.setItem('favoritePets', JSON.stringify(updatedFavorites));
-      setFavorites(updatedFavorites);
-    } catch (error) {
-      console.error('Erro ao remover favorito:', error);
-      Alert.alert('Erro', 'Não foi possível remover o pet');
-    }
+  // Esta é a função que remove o pet dos favoritos.
+  const handleRemoveFavorite = (petId: number) => {
+    Alert.alert(
+      "Remover Favorito",
+      "Tem certeza de que deseja remover este pet dos seus favoritos?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Remover",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const updatedFavorites = favorites.filter(fav => fav.id !== petId);
+              await Storage.setItem('favoritePets', JSON.stringify(updatedFavorites));
+              setFavorites(updatedFavorites); // Atualiza a tela
+            } catch (error) {
+              Alert.alert('Erro', 'Não foi possível remover o pet dos favoritos.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const sharePet = async (pet: Pet) => {
     try {
-      await Share.share({
-        message: `Conheça ${pet.name}! Um lindo ${pet.type} para adoção. Veja no App PetMatch!`,
-        url: pet.photos?.[0] || ''
-      });
+      await Share.share({ message: `Conheça ${pet.name}! Um lindo pet para adoção no app Aconchego.` });
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível compartilhar este pet');
+      Alert.alert('Erro', 'Não foi possível compartilhar este pet.');
     }
   };
 
   const renderFavoriteItem = ({ item }: { item: Pet }) => (
-    <TouchableOpacity 
-      style={styles.card} 
-      onPress={() => navigation.navigate('PetDetail', { pet: item })}
-    >
-      <Image 
-        source={{ uri: item.photos?.[0] || 'https://placehold.co/120x120/EFEFEF/3B82F6?text=Pet' }} 
-        style={styles.petImage} 
-      />
-      
+    <View style={styles.card}>
+      <TouchableOpacity onPress={() => navigation.navigate('PetDetail', { pet: item })}>
+        <Image
+          source={{ uri: item.photos?.[0] || 'https://placehold.co/600x400/E5E7EB/6B7280?text=Pet' }}
+          style={styles.petImage}
+        />
+      </TouchableOpacity>
       <View style={styles.cardContent}>
-        <View style={styles.petInfo}>
+        <View>
           <Text style={styles.petName}>{item.name}</Text>
-          <Text style={styles.petBreed}>{item.breed || 'Sem raça definida'}</Text>
-          
           <View style={styles.locationRow}>
             <Feather name="map-pin" size={14} color="#6B7280" />
             <Text style={styles.locationText}>{item.location || 'Não informado'}</Text>
           </View>
-
-          <View style={styles.badgesContainer}>
-            {item.vaccinated && (
-              <View style={styles.badge}>
-                <MaterialIcons name="verified" size={14} color="#FFFFFF" />
-                <Text style={styles.badgeText}>Vacinado</Text>
-              </View>
-            )}
-            {item.neutered && (
-              <View style={styles.badge}>
-                <FontAwesome5 name="clinic-medical" size={12} color="#FFFFFF" />
-                <Text style={styles.badgeText}>Castrado</Text>
-              </View>
-            )}
-          </View>
         </View>
-
-        <View style={styles.cardActions}>
-          <TouchableOpacity onPress={() => sharePet(item)} style={styles.iconButton}>
-            <Feather name="share-2" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleRemoveFavorite(item.id)} style={[styles.iconButton, styles.removeButton]}>
-            <Feather name="heart" size={20} color="#EF4444" />
-          </TouchableOpacity>
-        </View>
+        {/* ✅ ESTE É O BOTÃO DE REMOVER */}
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => handleRemoveFavorite(item.id)}
+        >
+          <Feather name="heart" size={20} color="#FFFFFF" fill="#FF6B6B" />
+        </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.adoptButton}
+        onPress={() => navigation.navigate('Chat', { chatId: `new_${item.id}`, petId: item.id, petName: item.name })}
+      >
+        <Text style={styles.adoptButtonText}>Iniciar Adoção</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -139,27 +118,25 @@ export const FavoritesScreen: React.FC = () => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Seus Favoritos</Text>
-          <Text style={styles.subtitle}>
-            {favorites.length} pet{favorites.length !== 1 ? 's' : ''} que você curtiu
-          </Text>
+          <Text style={styles.subtitle}>{favorites.length} pet{favorites.length !== 1 ? 's' : ''} que você curtiu</Text>
         </View>
-
         {loading ? (
-          <ActivityIndicator size="large" color="#FF6B6B" style={styles.loading} />
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color="#FF6B6B" />
+          </View>
         ) : (
           <FlatList
             data={favorites}
             renderItem={renderFavoriteItem}
             keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={[styles.listContent, favorites.length === 0 && styles.emptyListContent]}
+            contentContainerStyle={favorites.length === 0 ? styles.centeredContent : styles.listContent}
             ListEmptyComponent={
-              <View style={styles.emptyState}>
-                <Feather name="heart" size={48} color="#9CA3AF" />
-                <Text style={styles.emptyText}>Nenhum pet favoritado.</Text>
-                <Text style={styles.emptySubtext}>Dê like em um pet para vê-lo aqui.</Text>
+              <View style={styles.centered}>
+                <Feather name="archive" size={48} color="#CBD5E1" />
+                <Text style={styles.emptyText}>Sua lista está vazia</Text>
+                <Text style={styles.emptySubtitle}>Curta um pet para adicioná-lo aqui.</Text>
               </View>
             }
-            showsVerticalScrollIndicator={false}
           />
         )}
       </View>
@@ -168,8 +145,10 @@ export const FavoritesScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F7F8FA' },
+  safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
   container: { flex: 1 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
+  centeredContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     paddingHorizontal: 24,
     paddingTop: 20,
@@ -180,37 +159,50 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: '800', color: '#1F2937' },
   subtitle: { fontSize: 16, color: '#6B7280', marginTop: 4 },
-  loading: { marginTop: 20 },
   listContent: { padding: 24 },
-  emptyListContent: { flexGrow: 1 },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
-    flexDirection: 'row',
+    marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
     shadowRadius: 12,
-    elevation: 4
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
   },
-  petImage: { width: 120, height: 120, borderRadius: 16 },
-  cardContent: { flex: 1, padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  petInfo: { flex: 1 },
+  petImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#F3F4F6'
+  },
+  cardContent: {
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   petName: { fontSize: 20, fontWeight: '700', color: '#1F2937' },
-  petBreed: { fontSize: 14, color: '#6B7280', marginVertical: 4 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  locationText: { fontSize: 12, color: '#6B7280' },
-  badgesContainer: { flexDirection: 'row', gap: 6, marginTop: 8 },
-  badge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF6B6B', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 4 },
-  badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '600' },
-  cardActions: { flexDirection: 'row', gap: 12 },
-  iconButton: { backgroundColor: 'rgba(0,0,0,0.2)', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
-  removeButton: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#EF4444' },
-  emptyState: { alignItems: 'center', paddingVertical: 60, flex: 1, justifyContent: 'center' },
-  emptyText: { fontSize: 16, fontWeight: '600', color: '#6B7280', marginTop: 16 },
-  emptySubtext: { fontSize: 14, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  locationText: { fontSize: 14, color: '#6B7280' },
+  removeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FEF2F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adoptButton: {
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  adoptButtonText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
+  emptyText: { fontSize: 22, fontWeight: 'bold', color: '#374151', marginTop: 16 },
+  emptySubtitle: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginTop: 8 },
 });
 
 export default FavoritesScreen;

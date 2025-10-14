@@ -1,34 +1,42 @@
 // src/types/navigation.ts
 import { Pet } from './types';
 
-// Declaração manual de NavigatorScreenParams
 export type NavigatorScreenParams<ParamList> = {
-  screen?: keyof ParamList;
+  screen: keyof ParamList;
   params?: ParamList[keyof ParamList];
 };
 
-// Tabs do App
+export type PetsStackParamList = {
+  DashboardPets: undefined;
+  AddEditPet: { pet?: Pet };
+};
+
+export type ChatStackParamList = {
+  DashboardChats: undefined;
+  Chat: { chatId: string; petName?: string };
+};
+
+// ✅ CORREÇÃO: Removidas as abas 'Chats' e 'Pets'
 export type AppTabParamList = {
-  Home: undefined;
+  HomeStack: undefined;
   Favorites: undefined;
   Matches: undefined;
   Profile: undefined;
 };
 
-// Tabs do Admin
 export type AdminTabParamList = {
-  DashboardPets: undefined;
+  DashboardPets: NavigatorScreenParams<PetsStackParamList>;
   DashboardMatchRequests: undefined;
   DashboardChats: undefined;
 };
 
-// Root Stack
 export type RootStackParamList = {
   Welcome: undefined;
   Main: NavigatorScreenParams<AppTabParamList>;
   PetDetail: { pet: Pet };
-  Chat: { chatId: string };
+  Chat: { chatId: string; petId?: number; petName?: string; petImage?: string };
   AdminLogin: undefined;
   AdminDashboard: NavigatorScreenParams<AdminTabParamList>;
-   UserProfileRoot: undefined;
+  UserProfileRoot: undefined;
+  AddEditPet: { pet?: Pet };
 };

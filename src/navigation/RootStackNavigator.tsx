@@ -22,8 +22,6 @@ export default function RootStackNavigator() {
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminStack} />
-
-      {/* ✅ Nome atualizado */}
       <Stack.Screen name="UserProfileRoot" component={ProfileStackNavigator} />
     </Stack.Navigator>
   );

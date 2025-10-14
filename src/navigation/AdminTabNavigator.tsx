@@ -3,15 +3,12 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
 
-import DashboardPetsScreen from '../screens/DashboardPetsScreen';
 import DashboardChatsScreen from '../screens/DashboardChatsScreen';
 import DashboardMatchRequestsScreen from '../screens/DashboardMatchRequestsScreen';
+// Importamos o StackNavigator em vez da tela individual
+import PetsStackNavigator from './PetsStackNavigator';
 
-export type AdminTabParamList = {
-  DashboardPets: undefined;
-  DashboardChats: undefined;
-  DashboardMatchRequests: undefined;
-};
+import { AdminTabParamList } from '../types/navigation';
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
 
@@ -38,7 +35,8 @@ const AdminTabNavigator: React.FC = () => {
     >
       <Tab.Screen
         name="DashboardPets"
-        component={DashboardPetsScreen}
+        // O componente agora é o StackNavigator
+        component={PetsStackNavigator}
         options={{
           tabBarLabel: 'Pets',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (

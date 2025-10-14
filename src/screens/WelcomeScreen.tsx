@@ -1,9 +1,5 @@
-// src/screens/WelcomeScreen.tsx
-import React, { useEffect, useRef } from 'react';
-import { 
-  View, Text, StyleSheet, TouchableOpacity,
-  StatusBar, Animated, SafeAreaView 
-} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Animated, SafeAreaView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
@@ -13,80 +9,53 @@ type WelcomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>
 
 const WelcomeScreen: React.FC = () => {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
-
+  const [agreed, setAgreed] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      })
-    ]).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
   }, []);
 
   const handleNavigation = (role: 'user' | 'admin') => {
+    if (!agreed) {
+      Alert.alert("Termos de Uso", "Você precisa concordar com os Termos de Uso e a Política de Privacidade para continuar.");
+      return;
+    }
     if (role === 'admin') {
       navigation.navigate('AdminLogin');
     } else {
-      // Navega para o Tab Navigator 'Main' e seleciona a aba 'Home'
-      navigation.navigate('Main', { screen: 'Home' });
+      navigation.navigate('Main', { screen: 'HomeStack' });
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <Animated.View 
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }
-        ]}
-      >
+      <StatusBar barStyle="dark-content" />
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Feather name="heart" size={48} color="#EF4444" />
-          </View>
+          <View style={styles.logoContainer}><Feather name="heart" size={48} color="#EF4444" /></View>
           <Text style={styles.title}>Bem-vindo ao Aconchego</Text>
-          <Text style={styles.subtitle}>
-            Conectamos corações. Encontre seu novo melhor amigo para uma jornada de amor e companheirismo.
-          </Text>
+          <Text style={styles.subtitle}>Conectamos corações. Encontre seu novo melhor amigo.</Text>
         </View>
         
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.userButton]}
-            onPress={() => handleNavigation('user')}
-          >
-            <Feather name="home" size={20} color="#FFFFFF" />
+          <TouchableOpacity style={styles.button} onPress={() => handleNavigation('user')}>
             <Text style={styles.buttonText}>Quero Adotar um Pet</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.button, styles.adminButton]}
-            onPress={() => handleNavigation('admin')}
-          >
-            <Feather name="shield" size={20} color="#3B82F6" />
+          <TouchableOpacity style={[styles.button, styles.adminButton]} onPress={() => handleNavigation('admin')}>
             <Text style={[styles.buttonText, styles.adminButtonText]}>Sou uma ONG / Admin</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.termsContainer}>
-          <Text style={styles.termsText}>
-            Ao continuar, você concorda com nossos{' '}
-            <Text style={styles.termsLink}>Termos de Uso</Text> e{' '}
-            <Text style={styles.termsLink}>Política de Privacidade</Text>.
-          </Text>
+          <TouchableOpacity style={styles.checkboxContainer} onPress={() => setAgreed(!agreed)}>
+            <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
+              {agreed && <Feather name="check" size={14} color="#FFFFFF" />}
+            </View>
+            <Text style={styles.termsText}>
+              Eu concordo com os <Text style={styles.termsLink}>Termos de Uso</Text> e a <Text style={styles.termsLink}>Política de Privacidade</Text>.
+            </Text>
+          </TouchableOpacity>
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -101,14 +70,16 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: '800', color: '#1F2937', textAlign: 'center', marginBottom: 12 },
   subtitle: { fontSize: 16, color: '#6B7280', textAlign: 'center', lineHeight: 24 },
   buttonContainer: { gap: 16 },
-  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 56, borderRadius: 16, gap: 12 },
-  userButton: { backgroundColor: '#3B82F6' },
+  button: { backgroundColor: '#3B82F6', height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   adminButton: { backgroundColor: '#EFF6FF' },
   buttonText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
   adminButtonText: { color: '#3B82F6' },
-  termsContainer: { padding: 20, marginTop: 60, alignItems: 'center' },
-  termsText: { fontSize: 12, color: '#6B7280', textAlign: 'center', lineHeight: 18 },
-  termsLink: { color: '#3B82F6', fontWeight: '500' },
+  termsContainer: { marginTop: 40, alignItems: 'center' },
+  checkboxContainer: { flexDirection: 'row', alignItems: 'center', padding: 10 },
+  checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 1, borderColor: '#9CA3AF', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  checkboxChecked: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+  termsText: { flex: 1, fontSize: 12, color: '#6B7280', lineHeight: 18 },
+  termsLink: { color: '#3B82F6', fontWeight: '500', textDecorationLine: 'underline' },
 });
 
 export default WelcomeScreen;
