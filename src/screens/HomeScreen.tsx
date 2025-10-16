@@ -166,9 +166,7 @@ export const HomeScreen: React.FC = () => {
         <TouchableOpacity 
           style={styles.infoButton} 
           onPress={() => {
-            // Log de diagnóstico para confirmar os dados
-            //console.log("Navegando para detalhes com o pet:", JSON.stringify(pet, null, 2));
-            rootNavigation.navigate('PetDetail', { pet });
+           rootNavigation.navigate('PetDetail', { pet });
           }}
         >
           <Feather name="info" size={20} color="#FFFFFF" />

@@ -6,7 +6,7 @@ import { RootStackParamList } from '../types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Pet } from '../types/types';
 import PetCard from '../components/PetCard';
-import { API_BASE_URL } from '../config/api'; // ✅ 1. Importa a base da URL da API
+import { API_BASE_URL } from '../config/api'; 
 
 const { width, height } = Dimensions.get('window');
 
@@ -56,7 +56,7 @@ const useFavorites = (petId: number) => {
 };
 
 // ========================================================================
-// COMPONENTES DE UI (mantidos no arquivo)
+// COMPONENTES
 // ========================================================================
 
 const AttributeCard = ({ label, value, icon }: { label: string, value: string, icon: any }) => (
@@ -85,11 +85,10 @@ const PetDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { pet } = route.params;
   const { isFavorite, toggleFavorite } = useFavorites(pet.id);
 
-  // ✅ 2. Estados para carregar e armazenar os pets similares da API
+  
   const [similarPets, setSimilarPets] = useState<Pet[]>([]);
   const [isLoadingSimilar, setIsLoadingSimilar] = useState(true);
 
-  // ✅ 3. Efeito para buscar os pets da API quando a tela é carregada
   useEffect(() => {
     const fetchSimilarPets = async () => {
       try {
