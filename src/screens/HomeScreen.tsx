@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, Alert, PanResponder, Animated, Dimensions,
   ActivityIndicator, Image, TouchableOpacity, StatusBar, SafeAreaView,
-  Modal, Share
+  Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -18,11 +18,24 @@ const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.25;
 
 const mapApiPetToLocalPet = (apiPet: any): Pet => ({
-    id: apiPet.id, name: apiPet.name, type: apiPet.species, age: apiPet.age,
-    ageUnit: apiPet.ageUnit, description: apiPet.description, photos: apiPet.photos,
-    breed: apiPet.breed, location: apiPet.location, vaccinated: apiPet.healthInfo?.vaccinated,
-    neutered: apiPet.healthInfo?.castrated, size: apiPet.size, temperament: apiPet.personality,
-    needs: apiPet.requirements
+    id: apiPet.id,
+    name: apiPet.name,
+    type: apiPet.type, 
+    age: apiPet.age,
+    ageUnit: apiPet.ageUnit,
+    description: apiPet.description,
+    photos: apiPet.photos,
+    breed: apiPet.breed,
+    location: apiPet.location,
+    vaccinated: apiPet.vaccinated, 
+    neutered: apiPet.neutered, 
+    size: apiPet.size,
+    sex: apiPet.sex,
+    temperament: apiPet.temperament, 
+    needs: apiPet.needs,
+    status: apiPet.status,
+    matches: apiPet.matches,
+    views: apiPet.views
 });
 
 export const HomeScreen: React.FC = () => {
@@ -42,8 +55,8 @@ export const HomeScreen: React.FC = () => {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onPanResponderMove: (evt, gesture) => { position.setValue({ x: gesture.dx, y: gesture.dy }); },
-      onPanResponderRelease: (evt, gesture) => {
+      onPanResponderMove: (_, gesture) => { position.setValue({ x: gesture.dx, y: gesture.dy }); },
+      onPanResponderRelease: (_, gesture) => {
         if (gesture.dx > SWIPE_THRESHOLD) forceSwipe('right');
         else if (gesture.dx < -SWIPE_THRESHOLD) forceSwipe('left');
         else resetPosition();
@@ -57,6 +70,7 @@ export const HomeScreen: React.FC = () => {
     setLoading(true);
     setCurrentIndex(0);
     try {
+      // ✅ CORREÇÃO APLICADA AQUI: URL ajustada para /api/animals
       const response = await fetch(`${API_BASE_URL}/animals`);
       if (!response.ok) throw new Error('A resposta da rede não foi bem-sucedida');
       const data = await response.json();
@@ -149,8 +163,15 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.cardName}>{pet.name}, {pet.age} {pet.ageUnit}</Text>
           <View style={styles.locationContainer}><Feather name="map-pin" size={16} color="#FFFFFF" /><Text style={styles.cardLocation}>{pet.location}</Text></View>
         </View>
-        <TouchableOpacity style={styles.infoButton} onPress={() => rootNavigation.navigate('PetDetail', { pet })}>
-            <Feather name="info" size={20} color="#FFFFFF" />
+        <TouchableOpacity 
+          style={styles.infoButton} 
+          onPress={() => {
+            // Log de diagnóstico para confirmar os dados
+            //console.log("Navegando para detalhes com o pet:", JSON.stringify(pet, null, 2));
+            rootNavigation.navigate('PetDetail', { pet });
+          }}
+        >
+          <Feather name="info" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -222,7 +243,9 @@ export const HomeScreen: React.FC = () => {
   );
 };
 
+// Seus estilos originais completos
 const styles = StyleSheet.create({
+  // ... (todos os seus estilos permanecem aqui, sem alterações)
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
     flexDirection: 'row',

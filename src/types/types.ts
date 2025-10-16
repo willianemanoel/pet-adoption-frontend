@@ -2,23 +2,38 @@
 
 // ➤ Tipo para um pet
 export interface Pet {
+  // 🔹 Campos de imagem (para compatibilidade entre diferentes telas)
+  img_url?: string | string[]; // Pode ser uma URL única ou várias
+  photos_url?: string[];       // URLs vindas da API
+  photos?: string[];           // URLs locais ou múltiplas imagens
+  image?: string;              // Imagem única (ex: upload local)
+
+  // 🔹 Identificação
   id: number;
   name: string;
+
+  // 🔹 Classificação
   type?: 'Cachorro' | 'Gato' | 'Coelho' | 'Outro';
-  age?: number;
-  description?: string;
-  photos?: string[];
-  ageUnit?: string;
-  image?: string;
-  organization?: string;
   breed?: string;
+  age?: number;
+  ageUnit?: string; // ex: "anos", "meses"
+
+  // 🔹 Descrição e informações adicionais
+  description?: string;
+  organization?: string;
   location?: string;
+
+  // 🔹 Atributos físicos e de saúde
+  size?: 'Pequeno' | 'Médio' | 'Grande';
+  sex?: string; // "Macho" ou "Fêmea"
   vaccinated?: boolean;
   neutered?: boolean;
-  size?: 'Pequeno' | 'Médio' | 'Grande';
+
+  // 🔹 Personalidade e necessidades
   temperament?: string[];
   needs?: string[];
-  // Propriedades adicionadas para o dashboard
+
+  // 🔹 Dados adicionais (para dashboard, analytics, etc.)
   status?: 'Disponível' | 'Em processo' | 'Adotado';
   matches?: number;
   views?: number;
@@ -57,7 +72,7 @@ export interface User {
   };
 }
 
-// ➤ Tipos auxiliares
+// ➤ Tipos auxiliares para navegação e interface
 export type Screen = 'home' | 'matches' | 'favorites' | 'profile';
 export type AnimalFilter = 'all' | 'Cachorro' | 'Gato' | 'Coelho';
 export type ModalSize = 'small' | 'medium' | 'large';

@@ -1,204 +1,220 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+// src/screens/AddEditPetScreen.tsx
+import React, { useState, useCallback } from 'react';
+import {
+    View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert,
+    ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform
+} from 'react-native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { ImagePickerAsset } from 'expo-image-picker';
-import { API_BASE_URL } from '../config/api';
 
-interface PetFormData {
-  name: string;
-  breed: string;
-  age: string;
-  ageUnit: string;
-  size: string;
-  sex: string;
-  description: string;
-  location: string;
-}
+import { API_BASE_URL } from '../config/api';
+import { Pet } from '../types/types';
+import { ImageUploader } from '../components/ImageUploader';
+import { FormInput } from '../components/FormInput';
+import { SegmentedControl } from '../components/SegmentedControl';
+
+type AddEditPetScreenRouteProp = RouteProp<{ params: { pet?: Pet } }, 'params'>;
 
 export const AddEditPetScreen: React.FC = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { pet } = (route.params as any) || {};
+    const navigation = useNavigation();
+    const route = useRoute<AddEditPetScreenRouteProp>();
+    const { pet } = route.params || {};
+    const isEditing = !!pet;
 
-  const [loading, setLoading] = useState(false);
-  
-  // ✅ CORREÇÃO: Garante que o estado 'images' seja sempre um array.
-  const [images, setImages] = useState<string[]>(Array.isArray(pet?.photos) ? pet.photos : []);
-  
-  const [formData, setFormData] = useState<PetFormData>({
-    name: pet?.name || '',
-    breed: pet?.breed || '',
-    age: pet?.age?.toString() || '',
-    ageUnit: pet?.ageUnit || 'meses',
-    size: pet?.size || 'Médio',
-    sex: pet?.sex || 'Fêmea',
-    description: pet?.description || '',
-    location: pet?.location || ''
-  });
-
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-      allowsMultipleSelection: true,
+    const [loading, setLoading] = useState(false);
+    const [existingImages, setExistingImages] = useState<string[]>(pet?.photos || []);
+    const [newImages, setNewImages] = useState<ImagePickerAsset[]>([]);
+    
+    const [formData, setFormData] = useState({
+        name: pet?.name || '',
+        breed: pet?.breed || '',
+        age: pet?.age?.toString() || '',
+        ageUnit: pet?.ageUnit || 'meses',
+        size: pet?.size || 'Médio',
+        sex: pet?.sex || 'Fêmea',
+        description: pet?.description || '',
+        location: pet?.location || ''
     });
 
-    if (!result.canceled) {
-      setImages([...images, ...result.assets.map((asset: ImagePickerAsset) => asset.uri)]);
-    }
-  };
+    // ✅ Adicionado tipo 'string' ao parâmetro 'value'
+    const updateField = useCallback((field: keyof typeof formData, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    }, []);
 
-  const handleSubmit = async () => {
-    if (!formData.name || !formData.breed || !formData.age || !formData.location || !formData.description) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios (*).');
-      return;
-    }
-    setLoading(true);
-    const petData = new FormData();
-    Object.keys(formData).forEach(key => {
-      petData.append(key, formData[key as keyof PetFormData]);
-    });
-    images.forEach((uri, index) => {
-      const uriParts = uri.split('.');
-      const fileType = uriParts[uriParts.length - 1];
-      petData.append('photos', {
-        uri,
-        name: `photo_${index}.${fileType}`,
-        type: `image/${fileType}`,
-      } as any);
-    });
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+            allowsMultipleSelection: true,
+        });
 
-    try {
-      const isEditing = !!pet;
-      const url = isEditing ? `${API_BASE_URL}/animals/${pet.id}` : `${API_BASE_URL}/animals`;
-      const method = isEditing ? 'PUT' : 'POST';
-      const response = await fetch(url, { method, body: petData });
-      const result = await response.json();
-      if (response.ok) {
-        Alert.alert('Sucesso!', `Pet ${isEditing ? 'atualizado' : 'cadastrado'} com sucesso.`);
-        navigation.goBack();
-      } else {
-        throw new Error(result.message || 'Ocorreu um erro no servidor.');
-      }
-    } catch (error: any) {
-      console.error('Falha ao salvar o pet:', error);
-      Alert.alert('Erro ao Salvar', error.message || 'Não foi possível conectar ao servidor.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (!result.canceled && result.assets) {
+            setNewImages(prev => [...prev, ...result.assets]);
+        }
+    };
+    
+    const handleRemoveExisting = (uri: string) => setExistingImages(prev => prev.filter(img => img !== uri));
+    const handleRemoveNew = (uri: string) => setNewImages(prev => prev.filter(img => img.uri !== uri));
 
-  const updateField = (field: keyof PetFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+    const handleSubmit = async () => {
+        if (!formData.name || !formData.breed || !formData.age || !formData.location || !formData.description) {
+            Alert.alert('Campos Incompletos', 'Por favor, preencha todos os campos com asterisco (*).');
+            return;
+        }
 
-  const renderSelect = (label: string, options: string[], selected: string, onSelect: (value: string) => void) => (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.selectContainer}>
-        {options.map((option) => (
-          <TouchableOpacity
-            key={option}
-            style={[styles.selectOption, selected === option && styles.selectOptionActive]}
-            onPress={() => onSelect(option)}
-          >
-            <Text style={[styles.selectText, selected === option && styles.selectTextActive]}>
-              {option}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
+        setLoading(true);
+        const petData = new FormData();
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{pet ? 'Editar Pet' : 'Adicionar Pet'}</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
-            <Feather name="x" size={24} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Fotos</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageContainer}>
-                {images.map((uri, index) => (
-                  <Image key={index} source={{ uri }} style={styles.petImage} />
-                ))}
-                <TouchableOpacity style={styles.addImageButton} onPress={pickImage}>
-                  <Feather name="plus" size={24} color="#3B82F6" />
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nome *</Text>
-              <TextInput style={styles.textInput} value={formData.name} onChangeText={(v) => updateField('name', v)} placeholder="Ex: Bob" />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Raça *</Text>
-              <TextInput style={styles.textInput} value={formData.breed} onChangeText={(v) => updateField('breed', v)} placeholder="Ex: Vira-lata" />
-            </View>
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, { flex: 1, marginRight: 12 }]}>
-                <Text style={styles.label}>Idade *</Text>
-                <TextInput style={styles.textInput} value={formData.age} onChangeText={(v) => updateField('age', v)} keyboardType="numeric" placeholder="Ex: 2" />
-              </View>
-              {renderSelect('', ['meses', 'anos'], formData.ageUnit, (v) => updateField('ageUnit', v))}
-            </View>
-            {renderSelect('Porte', ['Pequeno', 'Médio', 'Grande'], formData.size, (v) => updateField('size', v))}
-            {renderSelect('Sexo', ['Fêmea', 'Macho'], formData.sex, (v) => updateField('sex', v))}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Localização *</Text>
-              <TextInput style={styles.textInput} value={formData.location} onChangeText={(v) => updateField('location', v)} placeholder="Ex: São Paulo, SP" />
-            </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Descrição *</Text>
-              <TextInput style={[styles.textInput, styles.textArea]} value={formData.description} onChangeText={(v) => updateField('description', v)} multiline placeholder="Descreva a personalidade do pet..." />
-            </View>
-          </View>
-        </ScrollView>
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
-            {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitButtonText}>{pet ? 'Salvar Alterações' : 'Cadastrar Pet'}</Text>}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
+        Object.keys(formData).forEach(key => {
+            petData.append(key, formData[key as keyof typeof formData]);
+        });
+        
+        newImages.forEach((asset, index) => {
+            const uri = asset.uri;
+            const ext = uri.split('.').pop();
+            const type = asset.mimeType || `image/${ext}`;
+            
+            petData.append('photos', {
+                uri,
+                name: asset.fileName || `photo_${Date.now()}_${index}.${ext}`,
+                type,
+            } as any);
+        });
+
+        if (isEditing) {
+            petData.append('existingPhotos', JSON.stringify(existingImages));
+        }
+
+        try {
+            const url = isEditing ? `${API_BASE_URL}/animals/${pet.id}` : `${API_BASE_URL}/animals`;
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const response = await fetch(url, { method, body: petData });
+            const result = await response.json();
+
+            if (response.ok) {
+                Alert.alert('Sucesso!', `Pet ${isEditing ? 'atualizado' : 'cadastrado'} com sucesso.`);
+                navigation.goBack();
+            } else {
+                throw new Error(result.message || 'Ocorreu um erro no servidor.');
+            }
+        } catch (error: any) {
+            console.error('Erro ao salvar o pet:', error);
+            Alert.alert('Erro', error.message || 'Não foi possível conectar ao servidor.');
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    const handleDelete = async () => {
+        if (!pet) return;
+
+        Alert.alert(
+            'Confirmar Exclusão',
+            `Tem certeza que deseja excluir ${pet.name}? Esta ação não pode ser desfeita.`,
+            [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                    text: 'Excluir',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setLoading(true);
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/animals/${pet.id}`, { method: 'DELETE' });
+                            if (response.ok) {
+                                Alert.alert('Sucesso!', 'Pet excluído com sucesso.');
+                                navigation.goBack();
+                            } else {
+                                throw new Error('Falha ao excluir o pet.');
+                            }
+                        } catch (error: any) {
+                            Alert.alert('Erro', error.message);
+                        } finally {
+                            setLoading(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>{isEditing ? 'Editar Pet' : 'Cadastrar Pet'}</Text>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
+                        <Feather name="x" size={24} color="#6B7280" />
+                    </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+                    <View style={styles.form}>
+                        <ImageUploader
+                            existingImages={existingImages}
+                            newImages={newImages.map(img => img.uri)}
+                            onPickImage={pickImage}
+                            onRemoveExisting={handleRemoveExisting}
+                            onRemoveNew={handleRemoveNew}
+                        />
+
+                        {/* ✅ Adicionado tipo '(v: string)' em todas as chamadas */}
+                        <FormInput label="Nome *" value={formData.name} onChangeText={(v: string) => updateField('name', v)} placeholder="Ex: Bob" />
+                        <FormInput label="Raça *" value={formData.breed} onChangeText={(v: string) => updateField('breed', v)} placeholder="Ex: Vira-lata" />
+                        
+                        <View style={styles.row}>
+                            <View style={{ flex: 2, marginRight: 12 }}>
+                                <FormInput label="Idade *" value={formData.age} onChangeText={(v: string) => updateField('age', v)} keyboardType="numeric" placeholder="Ex: 2" />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <SegmentedControl
+                                    label=" "
+                                    options={['meses', 'anos']}
+                                    selectedValue={formData.ageUnit}
+                                    onSelect={(v: string) => updateField('ageUnit', v)}
+                                />
+                            </View>
+                        </View>
+                        
+                        <SegmentedControl label="Porte *" options={['Pequeno', 'Médio', 'Grande']} selectedValue={formData.size} onSelect={(v: string) => updateField('size', v)} />
+                        <SegmentedControl label="Sexo *" options={['Fêmea', 'Macho']} selectedValue={formData.sex} onSelect={(v: string) => updateField('sex', v)} />
+                        
+                        <FormInput label="Localização *" value={formData.location} onChangeText={(v: string) => updateField('location', v)} placeholder="Ex: São Paulo, SP" />
+                        <FormInput label="Descrição *" value={formData.description} onChangeText={(v: string) => updateField('description', v)} multiline placeholder="Descreva a personalidade do pet..." />
+                    </View>
+                </ScrollView>
+
+                <View style={styles.footer}>
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
+                        {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.submitButtonText}>{isEditing ? 'Salvar Alterações' : 'Cadastrar Pet'}</Text>}
+                    </TouchableOpacity>
+                    {isEditing && (
+                        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} disabled={loading}>
+                            <Text style={styles.deleteButtonText}>Excluir Pet</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
 };
 
+
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
-  container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, borderBottomWidth: 1, borderColor: '#E5E7EB' },
-  title: { fontSize: 24, fontWeight: '800', color: '#1F2937' },
-  closeButton: { padding: 4 },
-  form: { padding: 24, flex: 1 },
-  inputGroup: { marginBottom: 20 },
-  label: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 8 },
-  textInput: { backgroundColor: '#F7F8FA', borderRadius: 12, padding: 16, fontSize: 16, borderWidth: 1, borderColor: '#E5E7EB' },
-  textArea: { minHeight: 120, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', alignItems: 'flex-end' },
-  selectContainer: { flexDirection: 'row', backgroundColor: '#F7F8FA', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', overflow: 'hidden', height: 58 },
-  selectOption: { flex: 1, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
-  selectOptionActive: { backgroundColor: '#3B82F6' },
-  selectText: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
-  selectTextActive: { color: '#FFFFFF' },
-  footer: { padding: 24, borderTopWidth: 1, borderColor: '#E5E7EB' },
-  submitButton: { backgroundColor: '#3B82F6', borderRadius: 16, padding: 16, alignItems: 'center' },
-  submitButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
-  imageContainer: { flexDirection: 'row', paddingVertical: 10 },
-  petImage: { width: 100, height: 100, borderRadius: 12, marginRight: 10 },
-  addImageButton: {
-    width: 100, height: 100, borderRadius: 12, backgroundColor: '#EFF6FF',
-    justifyContent: 'center', alignItems: 'center', borderWidth: 1,
-    borderColor: '#3B82F6', borderStyle: 'dashed'
-  }
+    safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
+    container: { flex: 1 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, borderBottomWidth: 1, borderColor: '#E5E7EB' },
+    title: { fontSize: 24, fontWeight: '800', color: '#1F2937' },
+    closeButton: { padding: 4 },
+    form: { paddingHorizontal: 24, paddingBottom: 24 },
+    row: { flexDirection: 'row', alignItems: 'flex-start' },
+    footer: { padding: 24, borderTopWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#FFFFFF' },
+    submitButton: { backgroundColor: '#3B82F6', borderRadius: 16, padding: 16, alignItems: 'center' },
+    submitButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+    deleteButton: { marginTop: 12, padding: 12, alignItems: 'center' },
+    deleteButtonText: { color: '#EF4444', fontSize: 14, fontWeight: '500' },
 });
 
 export default AddEditPetScreen;
